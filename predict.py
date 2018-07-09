@@ -45,7 +45,7 @@ def run(model, path):
             image = image.cpu()
         
         image_np = image.data.numpy().transpose(0, 2, 3, 1)
-        image_np = scale_image(imags_np[0, ...])
+        image_np = scale_image(image_np[0, ...])
         image = Image.fromarray(image_np)
         fname = os.path.join(path, '_gen{}.jpg'.format(i))
         image.save(fname)
