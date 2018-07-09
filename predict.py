@@ -17,6 +17,8 @@ from model import Generator
 from utils import scale_image
 
 import matplotlib.pyplot as plt
+import os
+from PIL import Image
 
 
 parser = argparse.ArgumentParser(description='Inference demo')
@@ -59,10 +61,9 @@ def run(args):
     
     images_np = images.data.numpy().transpose(0, 2, 3, 1)
     image_np = scale_image(images_np[0, ...])
+    img = Image.fromarray(image_np)
     
-    print('Output')
-    plt.figure()
-    plt.imshow(image_np)
+    return img
 
 
 def main():
@@ -76,7 +77,18 @@ def main():
     if args.cuda:
         use_cuda = True
 
-    run(args)
+    # create folder.
+    for i in range(1000):
+        name = 'repo/generate/try_{}'.format(i)
+        if not os.path.exists(name):
+            os.system('mkdir -p {}'.format(name))
+            break
+
+    for i in xrange(0, 50):
+        fname = os.path.join(name, '_gen{}.jpg'.format(i))
+        img = run(args)
+        img.save(fname)
+
 
 if __name__ == '__main__':
     main()
