@@ -16,9 +16,9 @@ from model import Generator
 
 from utils import scale_image
 
-import matplotlib.pyplot as plt
 import os
 from PIL import Image
+import time
 
 
 parser = argparse.ArgumentParser(description='Inference demo')
@@ -30,40 +30,27 @@ parser.add_argument(
     help='path to PyTorch state dict')
 parser.add_argument('--cuda', dest='cuda', action='store_true')
 
-seed = 2809
-use_cuda = False
-
-torch.manual_seed(seed)
-if use_cuda:
-    torch.cuda.manual_seed(seed)
-
-def run(args):
+def run(model, path):
     global use_cuda
     
-    print('Loading Generator')
-    model = Generator()
-    model.load_state_dict(torch.load(args.weights))
-    
-    # Generate latent vector
-    x = torch.randn(1, 512, 1, 1)
-    
-    if use_cuda:
-        model = model.cuda()
-        x = x.cuda()
-    
-    x = Variable(x, volatile=True)
-    
-    print('Executing forward pass')
-    images = model(x)
-    
-    if use_cuda:
-        images = images.cpu()
-    
-    images_np = images.data.numpy().transpose(0, 2, 3, 1)
-    image_np = scale_image(images_np[0, ...])
-    img = Image.fromarray(image_np)
-    
-    return img
+    for i in xrange(0, 50):
+        # Generate latent vector
+        x = torch.randn(1, 512, 1, 1)
+        if use_cuda:
+            model = model.cuda()
+            x = x.cuda()
+        x = Variable(x, volatile=True)
+        image = model(x)
+        if use_cuda:
+            image = image.cpu()
+        
+        image_np = image.data.numpy().transpose(0, 2, 3, 1)
+        image_np = scale_image(imags_np[0, ...])
+        image = Image.fromarray(image_np)
+        fname = os.path.join(path, '_gen{}.jpg'.format(i))
+        image.save(fname)
+        print("{}th image".format(i))
+
 
 
 def main():
@@ -76,6 +63,16 @@ def main():
     
     if args.cuda:
         use_cuda = True
+        print("Use cuda")
+
+    seed = int(time.time())
+    torch.manual_seed(seed)
+    if use_cuda:
+        torch.cuda.manual_seed(seed)
+
+    print('Loading Generator')
+    model = Generator()
+    model.load_state_dict(torch.load(args.weights))
 
     # create folder.
     for i in range(1000):
@@ -84,10 +81,7 @@ def main():
             os.system('mkdir -p {}'.format(name))
             break
 
-    for i in xrange(0, 50):
-        fname = os.path.join(name, '_gen{}.jpg'.format(i))
-        img = run(args)
-        img.save(fname)
+    run(model, name)
 
 
 if __name__ == '__main__':
